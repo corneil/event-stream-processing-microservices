@@ -12,6 +12,7 @@ import demo.event.AccountEventType
 import io.jumpco.open.kfsm.stateMachine
 
 interface AccountStateMachineContext {
+    val account: Account
     fun createAccount(event: AccountEvent): Account
     fun confirmAccount(event: AccountEvent): Account
     fun activateAccount(event: AccountEvent): Account
@@ -21,7 +22,7 @@ interface AccountStateMachineContext {
     fun unsuspendAccount(event: AccountEvent): Account
 }
 
-class AccountFSM(context: AccountStateMachineContext, initialState: AccountStatus) {
+class AccountFSM(context: AccountStateMachineContext) {
     companion object {
         private val definition =
             stateMachine(
@@ -31,7 +32,7 @@ class AccountFSM(context: AccountStateMachineContext, initialState: AccountStatu
                 demo.event.AccountEvent::class,
                 demo.account.Account::class
             ) {
-
+                initialState { account.status }
                 whenState(AccountStatus.ACCOUNT_CREATED) {
                     onEvent(AccountEventType.ACCOUNT_CREATED to ACCOUNT_PENDING) { event ->
                         require(event != null) { "event is required " }
@@ -75,6 +76,6 @@ class AccountFSM(context: AccountStateMachineContext, initialState: AccountStatu
             }.build()
     }
 
-    private val fsm = definition.create(context, initialState)
+    private val fsm = definition.create(context)
     fun sendEvent(event: AccountEvent): Account? = fsm.sendEvent(event.type, event)
 }
